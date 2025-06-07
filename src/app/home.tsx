@@ -47,10 +47,9 @@ export default function Home() {
           onPressOut={() => setIsModalVisible(false)}
         >
           <Pressable>
-            <View>
               <View style={styles.modalContent}>
                 <View style={styles.imageRow}>
-                  <Link href={"/agricultor"}>
+                  <Link href={"/agricultor"} asChild>
                     <Pressable style={styles.modalSubContent}>
                       <Image
                         source={require("../../assets/agricultores.png")}
@@ -59,7 +58,7 @@ export default function Home() {
                       <Text style={styles.text}>Agricultor</Text>
                     </Pressable>
                   </Link>
-                  <Link href={"/agricultor"}>
+                  <Link href={"/agricultor"} asChild>
                     <Pressable style={styles.modalSubContent}>
                       <Image
                         source={require("../../assets/consumidores.png")}
@@ -70,7 +69,6 @@ export default function Home() {
                   </Link>
                 </View>
               </View>
-            </View>
           </Pressable>
         </TouchableOpacity>
       </Modal>
@@ -120,8 +118,8 @@ const styles = StyleSheet.create({
   },
   imageRow: {
     flexDirection: "row",
-    justifyContent: "center",
     gap: 15,
+    justifyContent: "center",
   },
   modalSubContent: {
     display: "flex",

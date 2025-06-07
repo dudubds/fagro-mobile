@@ -2,6 +2,7 @@
   "expo": {
     "name": "fagro-mobile",
     "slug": "fagro-mobile",
+    "scheme": "fagro-mobile",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
