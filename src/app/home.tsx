@@ -49,7 +49,7 @@ export default function Home() {
           <Pressable>
               <View style={styles.modalContent}>
                 <View style={styles.imageRow}>
-                  <Link href={"/agricultor"} asChild>
+                  <Link href={"/cadastro/agricultor"} asChild>
                     <Pressable style={styles.modalSubContent}>
                       <Image
                         source={require("../../assets/agricultores.png")}
@@ -58,7 +58,7 @@ export default function Home() {
                       <Text style={styles.text}>Agricultor</Text>
                     </Pressable>
                   </Link>
-                  <Link href={"/agricultor"} asChild>
+                  <Link href={"/cadastro/consumidor"} asChild>
                     <Pressable style={styles.modalSubContent}>
                       <Image
                         source={require("../../assets/consumidores.png")}
