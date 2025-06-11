@@ -1,11 +1,27 @@
-import { View, Text, Image, Pressable } from "react-native";
+import { View, Text, StyleSheet, TextInput, Pressable, Alert } from "react-native";
 import { useState } from "react";
-import { Link } from "expo-router";
+import { Link, router } from "expo-router";
+import { supabase } from "../../utils/supabase";
 
 export default function AgricultorCadastro() {
-  return (  <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-    <Text>Agricultor</Text>
-    <Link href="/home" >Home</Link>
-  </View>
+  return (
+    <View style={styles.container}>
+      <Text style={styles.title}>Cadastro Agricultor</Text>
+    </View>
   )
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+    backgroundColor: '#ddffb2',
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 20,
+  },
+});
