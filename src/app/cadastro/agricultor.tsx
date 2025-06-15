@@ -1,48 +1,76 @@
 import { View, Text, StyleSheet, TextInput, Pressable, Alert } from "react-native";
-import { useState, useCallback } from "react";
-import { Link, router, useFocusEffect } from "expo-router";
+import React, { useState, useCallback } from "react";
+import { router, useFocusEffect } from "expo-router";
 import { supabase } from "../../utils/supabase";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function AgricultorCadastro() {
+  const [email, setEmail] = useState('');
+  const [fullName, setFullName] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
 
-const [email, setEmail] = useState('');
-const [password, setPassword] = useState('');
-const [confirmPassword, setConfirmPassword] = useState('');
+  useFocusEffect(
+    useCallback(() => {
+      setEmail('');
+      setFullName('');
+      setPassword('');
+      setConfirmPassword('');
+    }, [])
+  );
 
-async function handleSignUp() {
-  if (password !== confirmPassword) {
-    Alert.alert("Erro", "As senhas não coincidem!");
-    return;
+  async function handleSignUp() {
+    if (!fullName.trim() || !email.trim() || !password) {
+      Alert.alert("Atenção", "Por favor, preencha todos os campos.");
+      return;
+    }
+    if (password !== confirmPassword) {
+      Alert.alert("Erro", "As senhas não coincidem!");
+      return;
+    }
+
+    const { data, error } = await supabase.auth.signUp({
+      email: email,
+      password: password,
+      options: {
+        data: {
+          full_name: fullName,
+          user_type: 'agricultor'
+        }
+      }
+    });
+
+    if (error) {
+      Alert.alert("Erro no Cadastro", error.message);
+    } else if (data.user) {
+      Alert.alert(
+        "Cadastro realizado!",
+        "Enviamos um link de confirmação para o seu email para ativar sua conta."
+      );
+      router.push('/home');
+    }
   }
-
-  const { data, error } = await supabase.auth.signUp({
-    email: email,
-    password: password,
-  });
-
-  if (error) {
-    Alert.alert("Erro no Cadastro", error.message);
-  } else if (data.user) {
-    Alert.alert(
-      "Cadastro realizado!",
-      "Enviamos um link de confirmação para o seu email. Por favor, verifique sua caixa de entrada (e spam) para ativar sua conta."
-    );
-    router.push('/home');
-  }
-}
 
   return (
     <SafeAreaView style={styles.container}>
-      <Text style={styles.title}>Cadastro Agricultor</Text>
+      <Text style={styles.title}>Cadastro de Agricultor</Text>
 
       <TextInput
-      style={styles.input}
-      placeholder="seuemail@gmail.com"
-      value={email}
-      onChangeText={setEmail}
-      keyboardType="email-address"
-      autoCapitalize="none"/>
+        style={styles.input}
+        placeholder="Nome Completo"
+        value={fullName}
+        onChangeText={setFullName}
+        autoCapitalize="words"
+      />
+
+      <TextInput
+        style={styles.input}
+        placeholder="seuemail@gmail.com"
+        value={email}
+        onChangeText={setEmail}
+        keyboardType="email-address"
+        autoCapitalize="none"
+      />
 
       <TextInput
         style={styles.input}
@@ -50,7 +78,7 @@ async function handleSignUp() {
         value={password}
         onChangeText={setPassword}
         secureTextEntry={true}
-        autoCapitalize="none"/>
+      />
 
       <TextInput
         style={styles.input}
@@ -58,12 +86,11 @@ async function handleSignUp() {
         value={confirmPassword}
         onChangeText={setConfirmPassword}
         secureTextEntry={true}
-        autoCapitalize="none"/>
+      />
 
       <Pressable style={styles.button} onPress={handleSignUp}>
         <Text style={styles.buttonText}>Cadastrar</Text>
       </Pressable>
-
     </SafeAreaView>
   )
 }
@@ -92,16 +119,18 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
   },
   button: {
-    width: '80%',
-    height: 45,
-    backgroundColor: '#299640',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: 25,
+    width: 250,
+    backgroundColor: "#7ECB29",
+    textAlign: "center",
+    padding: 8,
+    borderRadius: 20,
+    marginTop: 15,
+    fontSize: 18,
   },
   buttonText: {
     fontSize: 18,
-    fontWeight: 500,
+    color: '#fff',
+    fontWeight: 'bold',
+    textAlign: 'center'
   },
 });
-

@@ -26,9 +26,11 @@ export default function Home() {
         />
         <Text style={styles.titulo}>Bem-vindo (a)</Text>
         <View>
-          <Pressable onPress={() => Alert.alert("pressionou")}>
-            <Text style={styles.button}>Entrar</Text>
-          </Pressable>
+          <Link href="/login" asChild>
+    <Pressable>
+        <Text style={styles.button}>Entrar</Text>
+    </Pressable>
+</Link>
           <Pressable onPress={() => toggleModal()}>
             <Text style={styles.button}>Cadastrar</Text>
           </Pressable>
