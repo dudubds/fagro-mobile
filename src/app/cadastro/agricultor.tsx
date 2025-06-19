@@ -47,7 +47,7 @@ export default function AgricultorCadastro() {
         "Cadastro realizado!",
         "Enviamos um link de confirmação para o seu email para ativar sua conta."
       );
-      router.push('/home');
+      router.push('/login');
     }
   }
 
