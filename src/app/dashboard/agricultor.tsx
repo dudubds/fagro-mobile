@@ -1,5 +1,3 @@
-// src/app/dashboard/agricultor.tsx
-
 import { View, Text, StyleSheet, Pressable, FlatList, Alert, Image } from "react-native";
 import React, { useState, useCallback } from 'react';
 import { supabase } from "../../utils/supabase";

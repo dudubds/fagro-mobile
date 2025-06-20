@@ -1,5 +1,3 @@
-// src/app/dashboard/agricultor/add-product.tsx
-
 import { View, Text, TextInput, Pressable, StyleSheet, Alert, Image } from "react-native";
 import React, { useState } from "react";
 import { supabase } from "../../../utils/supabase";

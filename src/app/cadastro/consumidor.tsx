@@ -47,7 +47,7 @@ export default function ConsumidorCadastro() {
         "Cadastro realizado!",
         "Enviamos um link de confirmação para o seu email para ativar sua conta."
       );
-      router.push('/login');
+      router.push('/');
     }
   }
 
