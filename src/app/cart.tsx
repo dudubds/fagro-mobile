@@ -1,7 +1,10 @@
+// src/app/cart.tsx
+
 import { View, Text, StyleSheet, FlatList, Pressable, Image, Alert } from "react-native";
 import { useCart } from "../context/CartContext";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
+import { MaterialIcons } from '@expo/vector-icons'; // <-- 1. Importa os ícones
 
 export default function CartScreen() {
   const { items, totalPrice, addToCart, decreaseQuantity, removeFromCart } = useCart();
@@ -34,7 +37,8 @@ export default function CartScreen() {
               </Pressable>
             </View>
             <Pressable onPress={() => removeFromCart(item.id)} style={styles.removeButton}>
-                <Text style={styles.removeButtonText}>🗑️</Text>
+                {/* 2. Ícone substituído */}
+                <MaterialIcons name="delete-outline" size={26} color="#e74c3c" />
             </Pressable>
           </View>
         )}
@@ -73,7 +77,6 @@ const styles = StyleSheet.create({
     quantityButtonText: { fontSize: 18, fontWeight: 'bold' },
     quantityText: { fontSize: 16, marginHorizontal: 10, fontWeight: 'bold' },
     removeButton: { padding: 5 },
-    removeButtonText: { fontSize: 20 },
     footer: { borderTopWidth: 1, borderTopColor: '#eee', padding: 20 },
     totalText: { fontSize: 18, fontWeight: 'bold', marginBottom: 10 },
     checkoutButton: { backgroundColor: '#7ECB29', padding: 15, borderRadius: 10, alignItems: 'center' },
