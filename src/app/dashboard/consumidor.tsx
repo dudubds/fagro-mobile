@@ -13,14 +13,12 @@ export default function ConsumidorDashboard() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   
-  // Estados para os modais
   const [isProductModalVisible, setProductModalVisible] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<any | null>(null);
   const [isMenuVisible, setMenuVisible] = useState(false);
 
   const { addToCart, items: cartItems } = useCart();
 
-  // Funções para o modal de produto
   const openProductModal = (product: any) => {
     setSelectedProduct(product);
     setProductModalVisible(true);
@@ -30,7 +28,6 @@ export default function ConsumidorDashboard() {
     setSelectedProduct(null);
   };
 
-  // Busca os produtos do banco de dados
   const fetchProducts = async () => {
     setLoading(true);
     const { data, error } = await supabase
@@ -44,14 +41,12 @@ export default function ConsumidorDashboard() {
 
   useFocusEffect(useCallback(() => { fetchProducts(); }, []));
 
-  // Filtra os produtos com base na busca
   const filteredProducts = useMemo(() => {
     return products.filter(product =>
       product.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
   }, [products, searchQuery]);
 
-  // Função de logout
   const handleLogout = async () => {
     await supabase.auth.signOut();
     router.replace('/');
@@ -59,7 +54,6 @@ export default function ConsumidorDashboard() {
 
   const cartItemCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
-  // Componente para renderizar cada item da lista
   const renderProductItem = ({ item }: { item: any }) => {
     const firstName = item.profiles?.full_name ? item.profiles.full_name.split(' ')[0] : 'Desconhecido';
     return (
@@ -78,6 +72,13 @@ export default function ConsumidorDashboard() {
       </Pressable>
     );
   };
+  
+  const formatDate = (dateString: string) => {
+    if (!dateString) return 'Não informado';
+    const date = new Date(dateString);
+    date.setDate(date.getDate() + 1);
+    return date.toLocaleDateString('pt-BR');
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -111,8 +112,15 @@ export default function ConsumidorDashboard() {
             {selectedProduct && (<>
               <Image source={{ uri: selectedProduct.image_url || 'https://placehold.co/400' }} style={styles.modalImage} />
               <Text style={styles.modalTitle}>{selectedProduct.name}</Text>
+              {selectedProduct.is_fragile && (
+                <View style={styles.tag}><MaterialIcons name="warning" size={16} color="#c0392b" /><Text style={styles.tagText}>Produto Frágil</Text></View>
+              )}
               <Text style={styles.modalFarmer}>Vendido por: {selectedProduct.profiles?.full_name?.split(' ')[0] || 'Desconhecido'}</Text>
               <Text style={styles.modalDescription}>{selectedProduct.description || 'Sem descrição.'}</Text>
+              <View style={styles.dateInfoContainer}>
+                <Text style={styles.dateLabel}>Colhido em: <Text style={styles.dateValue}>{formatDate(selectedProduct.harvest_date)}</Text></Text>
+                <Text style={styles.dateLabel}>Válido até: <Text style={styles.dateValue}>{formatDate(selectedProduct.expiration_date)}</Text></Text>
+              </View>
               <Text style={styles.modalPrice}>R$ {selectedProduct.price.toFixed(2)} / {selectedProduct.unit}</Text>
               <Pressable style={styles.modalAddToCartButton} onPress={() => { addToCart(selectedProduct); Alert.alert("Sucesso", `${selectedProduct.name} foi adicionado ao carrinho!`); closeProductModal(); }}>
                 <Text style={styles.modalButtonText}>Adicionar ao Carrinho</Text>
@@ -123,11 +131,18 @@ export default function ConsumidorDashboard() {
         </TouchableOpacity>
       </Modal>
 
-      {/* Cabeçalho da Tela */}
+      {/* Cabeçalho da Tela Corrigido */}
       <View style={styles.header}>
         <Text style={styles.title}>Produtos</Text>
         <View style={{flexDirection: 'row', alignItems: 'center'}}>
-          <Link href="/cart" asChild><Pressable><View style={styles.cartIconContainer}><MaterialIcons name="shopping-cart" size={28} color="black" />{cartItemCount > 0 && <Text style={styles.cartBadge}>{cartItemCount}</Text>}</View></Pressable></Link>
+          <Link href="/cart" asChild>
+            <Pressable>
+              <View style={styles.cartIconContainer}>
+                <MaterialIcons name="shopping-cart" size={28} color="black" />
+                {cartItemCount > 0 && <Text style={styles.cartBadge}>{cartItemCount}</Text>}
+              </View>
+            </Pressable>
+          </Link>
           <Pressable onPress={() => setMenuVisible(true)}>
             <MaterialIcons name="menu" size={32} color="black" />
           </Pressable>
@@ -173,9 +188,14 @@ const styles = StyleSheet.create({
     modalBackdrop: { flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.5)', justifyContent: 'center', alignItems: 'center' },
     modalContent: { backgroundColor: '#fff', padding: 20, borderRadius: 15, width: '90%', alignItems: 'center' },
     modalImage: { width: '100%', height: 200, borderRadius: 10, marginBottom: 15 },
-    modalTitle: { fontSize: 24, fontWeight: 'bold', marginBottom: 5 },
-    modalFarmer: { fontSize: 16, color: 'gray', marginBottom: 15 },
+    modalTitle: { fontSize: 24, fontWeight: 'bold', marginBottom: 5, textAlign: 'center' },
+    tag: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fbe9e7', paddingVertical: 5, paddingHorizontal: 10, borderRadius: 15, marginBottom: 10 },
+    tagText: { marginLeft: 5, color: '#c0392b', fontWeight: 'bold' },
+    modalFarmer: { fontSize: 16, color: 'gray', marginBottom: 10 },
     modalDescription: { fontSize: 16, textAlign: 'center', marginBottom: 15 },
+    dateInfoContainer: { width: '100%', padding: 10, backgroundColor: '#f1f1f1', borderRadius: 8, marginBottom: 15 },
+    dateLabel: { fontSize: 14, color: '#555' },
+    dateValue: { fontWeight: 'bold', color: '#000' },
     modalPrice: { fontSize: 20, fontWeight: 'bold', color: '#299640', marginBottom: 20 },
     modalAddToCartButton: { backgroundColor: '#7ECB29', paddingVertical: 12, paddingHorizontal: 30, borderRadius: 25 },
     modalButtonText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
