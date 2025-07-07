@@ -1,6 +1,6 @@
 // src/app/dashboard/consumidor.tsx
 
-import { View, Text, StyleSheet, FlatList, Image, Pressable, TextInput, Alert, Modal, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, FlatList, Image, Pressable, TextInput, Alert, Modal, TouchableOpacity, ScrollView } from "react-native";
 import React, { useState, useCallback, useMemo } from 'react';
 import { supabase } from "../../utils/supabase";
 import { useFocusEffect, router, Link } from "expo-router";
@@ -8,50 +8,56 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useCart } from "../../context/CartContext";
 import { MaterialIcons } from '@expo/vector-icons';
 
+const CATEGORIES = ['Todos', 'Frutas', 'Legumes', 'Verduras', 'Embutidos', 'Outros'];
+
 export default function ConsumidorDashboard() {
-  const [products, setProducts] = useState<any[]>([]);
+  const [allProducts, setAllProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   
-  const [isProductModalVisible, setProductModalVisible] = useState(false);
+  // Estados dos Filtros
+  const [selectedCategory, setSelectedCategory] = useState('Todos');
+  const [priceSort, setPriceSort] = useState<'asc' | 'desc' | null>(null);
+  
+  const [isModalVisible, setModalVisible] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<any | null>(null);
   const [isMenuVisible, setMenuVisible] = useState(false);
-
   const { addToCart, items: cartItems } = useCart();
 
-  const openProductModal = (product: any) => {
-    setSelectedProduct(product);
-    setProductModalVisible(true);
-  };
-  const closeProductModal = () => {
-    setProductModalVisible(false);
-    setSelectedProduct(null);
-  };
+  const openProductModal = (product: any) => { setSelectedProduct(product); setModalVisible(true); };
+  const closeProductModal = () => { setModalVisible(false); setSelectedProduct(null); };
 
   const fetchProducts = async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from('products')
-      .select('*, profiles (full_name)')
-      .order('created_at', { ascending: false });
+    const { data, error } = await supabase.from('products').select('*, profiles (full_name)').order('created_at', { ascending: false });
     if (error) { Alert.alert("Erro", "Não foi possível carregar os produtos."); } 
-    else { setProducts(data); }
+    else { setAllProducts(data); }
     setLoading(false);
   };
 
   useFocusEffect(useCallback(() => { fetchProducts(); }, []));
 
-  const filteredProducts = useMemo(() => {
-    return products.filter(product =>
-      product.name.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  }, [products, searchQuery]);
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    router.replace('/');
+  const filteredAndSortedProducts = useMemo(() => {
+    let result = [...allProducts];
+    if (selectedCategory !== 'Todos') {
+      result = result.filter(p => p.category === selectedCategory);
+    }
+    if (searchQuery) {
+      result = result.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()));
+    }
+    if (priceSort) {
+      result.sort((a, b) => priceSort === 'asc' ? a.price - b.price : b.price - a.price);
+    }
+    return result;
+  }, [allProducts, selectedCategory, searchQuery, priceSort]);
+  
+  const togglePriceSort = () => {
+    if (priceSort === null) setPriceSort('asc');
+    else if (priceSort === 'asc') setPriceSort('desc');
+    else setPriceSort(null);
   };
 
+  const handleLogout = async () => { await supabase.auth.signOut(); router.replace('/'); };
   const cartItemCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
   const renderProductItem = ({ item }: { item: any }) => {
@@ -75,46 +81,30 @@ export default function ConsumidorDashboard() {
   
   const formatDate = (dateString: string) => {
     if (!dateString) return 'Não informado';
-    const date = new Date(dateString);
-    date.setDate(date.getDate() + 1);
+    const date = new Date(dateString); date.setDate(date.getDate() + 1);
     return date.toLocaleDateString('pt-BR');
   }
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Modal do Menu Hambúrguer */}
-      <Modal
-        animationType="fade"
-        transparent={true}
-        visible={isMenuVisible}
-        onRequestClose={() => setMenuVisible(false)}
-      >
+      {/* Modal do Menu */}
+      <Modal animationType="fade" transparent={true} visible={isMenuVisible} onRequestClose={() => setMenuVisible(false)}>
         <TouchableOpacity style={styles.menuBackdrop} onPressOut={() => setMenuVisible(false)}>
           <View style={styles.menuContainer}>
-            <Link href="/profile" asChild>
-              <Pressable onPress={() => setMenuVisible(false)} style={styles.menuItem}>
-                <MaterialIcons name="person-outline" size={24} color="black" />
-                <Text style={styles.menuItemText}>Meu Perfil</Text>
-              </Pressable>
-            </Link>
-            <Pressable onPress={handleLogout} style={styles.menuItem}>
-              <MaterialIcons name="logout" size={24} color="black" />
-              <Text style={styles.menuItemText}>Sair</Text>
-            </Pressable>
+            <Link href="/profile" asChild><Pressable onPress={() => setMenuVisible(false)} style={styles.menuItem}><MaterialIcons name="person-outline" size={24} color="black" /><Text style={styles.menuItemText}>Meu Perfil</Text></Pressable></Link>
+            <Pressable onPress={handleLogout} style={styles.menuItem}><MaterialIcons name="logout" size={24} color="black" /><Text style={styles.menuItemText}>Sair</Text></Pressable>
           </View>
         </TouchableOpacity>
       </Modal>
 
       {/* Modal de Detalhes do Produto */}
-      <Modal animationType="fade" transparent={true} visible={isProductModalVisible} onRequestClose={closeProductModal}>
+      <Modal animationType="fade" transparent={true} visible={isModalVisible} onRequestClose={closeProductModal}>
         <TouchableOpacity style={styles.modalBackdrop} activeOpacity={1} onPressOut={closeProductModal}>
           <Pressable><View style={styles.modalContent}>
             {selectedProduct && (<>
               <Image source={{ uri: selectedProduct.image_url || 'https://placehold.co/400' }} style={styles.modalImage} />
               <Text style={styles.modalTitle}>{selectedProduct.name}</Text>
-              {selectedProduct.is_fragile && (
-                <View style={styles.tag}><MaterialIcons name="warning" size={16} color="#c0392b" /><Text style={styles.tagText}>Produto Frágil</Text></View>
-              )}
+              {selectedProduct.is_fragile && (<View style={styles.tag}><MaterialIcons name="warning" size={16} color="#c0392b" /><Text style={styles.tagText}>Produto Frágil</Text></View>)}
               <Text style={styles.modalFarmer}>Vendido por: {selectedProduct.profiles?.full_name?.split(' ')[0] || 'Desconhecido'}</Text>
               <Text style={styles.modalDescription}>{selectedProduct.description || 'Sem descrição.'}</Text>
               <View style={styles.dateInfoContainer}>
@@ -131,30 +121,36 @@ export default function ConsumidorDashboard() {
         </TouchableOpacity>
       </Modal>
 
-      {/* Cabeçalho da Tela Corrigido */}
+      {/* Cabeçalho da Tela */}
       <View style={styles.header}>
         <Text style={styles.title}>Produtos</Text>
         <View style={{flexDirection: 'row', alignItems: 'center'}}>
-          <Link href="/cart" asChild>
-            <Pressable>
-              <View style={styles.cartIconContainer}>
-                <MaterialIcons name="shopping-cart" size={28} color="black" />
-                {cartItemCount > 0 && <Text style={styles.cartBadge}>{cartItemCount}</Text>}
-              </View>
-            </Pressable>
-          </Link>
-          <Pressable onPress={() => setMenuVisible(true)}>
-            <MaterialIcons name="menu" size={32} color="black" />
-          </Pressable>
+          <Link href="/cart" asChild><Pressable><View style={styles.cartIconContainer}><MaterialIcons name="shopping-cart" size={28} color="black" />{cartItemCount > 0 && <Text style={styles.cartBadge}>{cartItemCount}</Text>}</View></Pressable></Link>
+          <Pressable onPress={() => setMenuVisible(true)}><MaterialIcons name="menu" size={32} color="black" /></Pressable>
         </View>
       </View>
-
-      <TextInput style={styles.searchBar} placeholder="Pesquisar por produto..." value={searchQuery} onChangeText={setSearchQuery}/>
       
+      <TextInput style={styles.searchBar} placeholder="Pesquisar por produto..." value={searchQuery} onChangeText={setSearchQuery}/>
+
+      {/* Barra de Filtros */}
+      <View style={styles.filtersContainer}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 15, paddingVertical: 10 }}>
+          {CATEGORIES.map(cat => (
+            <Pressable key={cat} style={[styles.filterTag, selectedCategory === cat && styles.tagSelected]} onPress={() => setSelectedCategory(cat)}>
+              <Text style={[styles.tagText, selectedCategory === cat && {color: '#fff'}]}>{cat}</Text>
+            </Pressable>
+          ))}
+        </ScrollView>
+        <Pressable onPress={togglePriceSort} style={styles.priceSortButton}>
+          <Text>Preço</Text>
+          <MaterialIcons name={priceSort === 'asc' ? 'arrow-upward' : priceSort === 'desc' ? 'arrow-downward' : 'swap-vert'} size={24} color="#333" />
+        </Pressable>
+      </View>
+
       {loading && <Text style={styles.loadingText}>Carregando produtos...</Text>}
       
       <FlatList
-        data={filteredProducts}
+        data={filteredAndSortedProducts}
         keyExtractor={(item) => item.id}
         renderItem={renderProductItem}
         ListEmptyComponent={<Text style={styles.emptyText}>Nenhum produto encontrado.</Text>}
@@ -171,10 +167,15 @@ const styles = StyleSheet.create({
     cartIconContainer: { flexDirection: 'row', padding: 5, marginRight: 15 },
     cartBadge: { backgroundColor: '#e74c3c', color: '#fff', borderRadius: 10, paddingHorizontal: 5, fontSize: 12, position: 'absolute', right: -5, top: -5 },
     menuBackdrop: { flex: 1 },
-    menuContainer: { position: 'absolute', top: 85, right: 20, backgroundColor: 'white', borderRadius: 10, padding: 10, elevation: 5, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 3.84, },
+    menuContainer: { position: 'absolute', top: 85, right: 20, backgroundColor: 'white', borderRadius: 10, padding: 10, elevation: 5 },
     menuItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, paddingHorizontal: 15},
     menuItemText: { fontSize: 18, marginLeft: 10 },
     searchBar: { height: 40, margin: 15, paddingHorizontal: 15, backgroundColor: '#f0f0f0', borderRadius: 20 },
+    filtersContainer: { flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderColor: '#eee' },
+    priceSortButton: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 15, gap: 5 },
+    filterTag: { paddingVertical: 8, paddingHorizontal: 16, borderRadius: 20, borderWidth: 1.5, borderColor: '#299640', marginRight: 10 },
+    tagSelected: { backgroundColor: '#299640' },
+    tagText: { fontSize: 14, color: '#000'},
     productItem: { backgroundColor: '#f9f9f9', padding: 10, borderRadius: 10, marginBottom: 10, borderWidth: 1, borderColor: '#eee', flexDirection: 'row', alignItems: 'center' },
     productImage: { width: 80, height: 80, borderRadius: 8, marginRight: 15 },
     productInfo: { flex: 1 },
@@ -190,7 +191,7 @@ const styles = StyleSheet.create({
     modalImage: { width: '100%', height: 200, borderRadius: 10, marginBottom: 15 },
     modalTitle: { fontSize: 24, fontWeight: 'bold', marginBottom: 5, textAlign: 'center' },
     tag: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fbe9e7', paddingVertical: 5, paddingHorizontal: 10, borderRadius: 15, marginBottom: 10 },
-    tagText: { marginLeft: 5, color: '#c0392b', fontWeight: 'bold' },
+    tagTextFragile: { marginLeft: 5, color: '#c0392b', fontWeight: 'bold' },
     modalFarmer: { fontSize: 16, color: 'gray', marginBottom: 10 },
     modalDescription: { fontSize: 16, textAlign: 'center', marginBottom: 15 },
     dateInfoContainer: { width: '100%', padding: 10, backgroundColor: '#f1f1f1', borderRadius: 8, marginBottom: 15 },
