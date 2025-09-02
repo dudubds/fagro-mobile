@@ -7,12 +7,13 @@ interface Product {
 }
 
 interface CartItem extends Product {
+  farmer_id: string;
   quantity: number;
 }
 
 interface ICartContext {
   items: CartItem[];
-  addToCart: (product: Product) => void;
+  addToCart: (product: Product & { farmer_id: string }) => void;
   decreaseQuantity: (productId: string) => void;
   removeFromCart: (productId: string) => void;
   clearCart: () => void;
@@ -31,7 +32,7 @@ const CartContext = createContext<ICartContext>({
 export function CartProvider({ children }: PropsWithChildren) {
   const [items, setItems] = useState<CartItem[]>([]);
 
-  const addToCart = (product: Product) => {
+  const addToCart = (product: Product & { farmer_id: string }) => {
     setItems((currentItems) => {
       const existingItem = currentItems.find((item) => item.id === product.id);
       if (existingItem) {
