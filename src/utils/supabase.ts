@@ -2,17 +2,15 @@ import 'react-native-url-polyfill/auto';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createClient } from '@supabase/supabase-js';
 
-// 1. Importe o Constants
-import Constants from 'expo-constants';
+// A url pode ficar hardcoded ou vir do .env (preferível hardcoded se for fixa para evitar erros)
+const supabaseUrl = 'https://popqguxjvrrjoyvhrqnh.supabase.co';
 
-// 2. Leia as chaves do "extra" que você definiu no app.config.js
-// Cuidado: 'Constants.expoConfig.extra' é o tipo correto.
-const supabaseUrl = Constants.expoConfig?.extra?.supabaseUrl;
-const supabaseKey = Constants.expoConfig?.extra?.supabaseKey;
+// AQUI ESTÁ A CORREÇÃO: Usar process.env.EXPO_PUBLIC_...
+// O babel-preset-expo vai preencher isso automaticamente no Dev e no Release
+const supabaseKey = process.env.EXPO_PUBLIC_SUPABASE_KEY || "";
 
-// 3. Verifique se as chaves foram carregadas (para debug)
-if (!supabaseUrl || !supabaseKey) {
-  console.error("ERRO: Variáveis do Supabase não carregadas! Verifique o app.config.js e o .env");
+if (!supabaseKey) {
+  console.error("ERRO CRÍTICO: Chave do Supabase não encontrada! Verifique seu arquivo .env");
 }
 
 export const supabase = createClient(supabaseUrl, supabaseKey, {

@@ -49,7 +49,7 @@ export default {
       
       // O ID do Projeto EAS (que o terminal pediu)
       "eas": {
-        "projectId": "a2b310c4-03c7-4929-9d23-1085f7ff3b6d"
+        "projectId": "62e70bd4-300c-4027-8e7c-4358a8d30253"
       }
     }
   }
